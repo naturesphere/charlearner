@@ -38,7 +38,7 @@ def make_app():
 
 if __name__=="__main__":
 
-    model_name = "basic-3000"
+    model_name = "basic-30000"
     parser = argparse.ArgumentParser()
     parser.add_argument('--port',nargs='?',type=int,default=8000,help='port')
 

@@ -15,18 +15,18 @@ class yaml2txt:
             print(tar_file)
 
         # convert
-        with open(src_file) as f:
+        with open(src_file, encoding='utf-8') as f:
             temp = yaml.load(f.read())
             # print(temp)
             a = temp['conversations']
         
-        with open(tar_file, "w") as f:
+        with open(tar_file, "w", encoding='utf-8') as f:
             for t in a:
                 L = len(t)
                 f.write("===\n")
                 for i in range(L-1):
-                    f.write("Q: " + t[i] + '\n')
-                    f.write("A: " + t[i+1] + '\n')
+                    f.write("Q: " + str(t[i]) + '\n')
+                    f.write("A: " + str(t[i+1]) + '\n')
 
     def yamls2txts(self, src_dir):
         re = src_dir + os.sep + "*.yml"

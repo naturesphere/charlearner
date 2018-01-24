@@ -57,7 +57,7 @@ class BotPredictor(object):
             FunctionData.check_arithmetic_pattern_and_replace(sentence)
 
         for pre_time in range(2):
-            tokens = nltk.word_tokenize(new_sentence.lower())
+            tokens = nltk.word_tokenize(new_sentence.lower().strip(string.punctuation).strip())
             tmp_sentence = [' '.join(tokens[:]).strip()]
 
             self.session.run(self.infer_batch.initializer,

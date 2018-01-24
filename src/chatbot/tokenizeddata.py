@@ -21,6 +21,7 @@ from tensorflow.python.ops import lookup_ops
 
 from chatbot.hparams import HParams
 from chatbot.knowledgebase import KnowledgeBase
+import string
 
 COMMENT_LINE_STT = "#=="
 CONVERSATION_SEP = "==="
@@ -194,7 +195,6 @@ class TokenizedData:
 
     def _load_corpus(self, corpus_dir):
         for fd in range(2, -1, -1):
-        # for fd in range(1):
             file_list = []
             if fd == 0:
                 file_dir = os.path.join(corpus_dir, AUG0_FOLDER)
@@ -214,13 +214,18 @@ class TokenizedData:
             src_dataset = dataset.filter(lambda line:
                                          tf.logical_and(tf.size(line) > 0,
                                                         tf.equal(tf.substr(line, 0, 2), tf.constant('Q:'))))
-            src_dataset = src_dataset.map(lambda line:
-                                          tf.substr(line, 2, MAX_LEN)).prefetch(4096)
+            src_dataset = src_dataset.map(lambda line: tf.substr(line, 2, MAX_LEN))
+            src_dataset = src_dataset.map(lambda x: tf.py_func(lambda x: x.lower(), [x], tf.string, stateful=False))
+            src_dataset = src_dataset.map(lambda x: tf.py_func(lambda x: x.decode().strip(string.punctuation).strip(),
+                                            [x], tf.string, stateful=False)).prefetch(4096)
+
             tgt_dataset = dataset.filter(lambda line:
                                          tf.logical_and(tf.size(line) > 0,
                                                         tf.equal(tf.substr(line, 0, 2), tf.constant('A:'))))
-            tgt_dataset = tgt_dataset.map(lambda line:
-                                          tf.substr(line, 2, MAX_LEN)).prefetch(4096)
+            tgt_dataset = tgt_dataset.map(lambda line: tf.substr(line, 2, MAX_LEN))
+            tgt_dataset = tgt_dataset.map(lambda x: tf.py_func(lambda x: x.lower(), [x], tf.string, stateful=False))
+            tgt_dataset = tgt_dataset.map(lambda x: tf.py_func(lambda x: x.decode().strip(string.punctuation).strip(),
+                                                               [x], tf.string, stateful=False)).prefetch(4096)
 
             src_tgt_dataset = tf.data.Dataset.zip((src_dataset, tgt_dataset))
             if fd == 1:
@@ -235,19 +240,22 @@ class TokenizedData:
 
     def _convert_to_tokens(self, buffer_size):
         # The following 3 steps act as a python String lower() function
+
         # Split to characters
-        self.text_set = self.text_set.map(lambda src, tgt:
-                                          (tf.string_split([src], delimiter='').values,
-                                           tf.string_split([tgt], delimiter='').values)
-                                          ).prefetch(buffer_size)
-        # Convert all upper case characters to lower case characters
-        self.text_set = self.text_set.map(lambda src, tgt:
-                                          (self.case_table.lookup(src), self.case_table.lookup(tgt))
-                                          ).prefetch(buffer_size)
-        # Join characters back to strings
-        self.text_set = self.text_set.map(lambda src, tgt:
-                                          (tf.reduce_join([src]), tf.reduce_join([tgt]))
-                                          ).prefetch(buffer_size)
+        # self.text_set = self.text_set.map(lambda src, tgt:
+        #                                   (tf.string_split([src], delimiter='').values,
+        #                                    tf.string_split([tgt], delimiter='').values)
+        #                                   ).prefetch(buffer_size)
+
+        # # Convert all upper case characters to lower case characters
+        # self.text_set = self.text_set.map(lambda src, tgt:
+        #                                   (self.case_table.lookup(src), self.case_table.lookup(tgt))
+        #                                   ).prefetch(buffer_size)
+        #
+        # # Join characters back to strings
+        # self.text_set = self.text_set.map(lambda src, tgt:
+        #                                   (tf.reduce_join([src]), tf.reduce_join([tgt]))
+        #                                   ).prefetch(buffer_size)
 
         # Split to word tokens
         self.text_set = self.text_set.map(lambda src, tgt:
@@ -282,7 +290,6 @@ def check_vocab(vocab_file):
         raise ValueError("The vocab_file does not exist. Please run the script to create it.")
 
     return len(vocab_list), vocab_list
-
 
 def prepare_case_table():
     keys = tf.constant([chr(i) for i in range(32, 127)])
@@ -369,4 +376,3 @@ if __name__ == "__main__":
                 except tf.errors.OutOfRangeError:
                     print("end of data @ {}".format(i))
                     break
-
