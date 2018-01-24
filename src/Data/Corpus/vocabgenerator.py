@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import os
+import string
 
 AUG0_FOLDER = "Augment0"
 AUG1_FOLDER = "Augment1"
@@ -58,7 +59,7 @@ def generate_vocab_file(corpus_dir):
                     continue  # Will be processed below
                 with open(full_path_name, 'r',encoding="utf8") as f:
                     for line in f:
-                        l = line.strip()
+                        l = line.strip(string.punctuation).strip()
                         if not l:
                             continue
                         if l.startswith("Q:") or l.startswith("A:"):
@@ -75,7 +76,7 @@ def generate_vocab_file(corpus_dir):
     cornell_file = os.path.join(corpus_dir, AUG0_FOLDER, CORNELL_DATA_FILE)
     with open(cornell_file, 'r',encoding="utf8") as f1:
         for line in f1:
-            ln = line.strip()
+            ln = line.strip(string.punctuation).strip()
             if not ln:
                 continue
             if ln.startswith("Q:") or ln.startswith("A:"):
@@ -103,7 +104,7 @@ def generate_vocab_file(corpus_dir):
             line_cnt += 1
             if line_cnt % 200000 == 0:
                 print("{:,} lines of reddit data file scanned.".format(line_cnt))
-            ln = line.strip()
+            ln = line.strip(string.punctuation).strip()
             if not ln:
                 continue
             if ln.startswith("Q:") or ln.startswith("A:"):
